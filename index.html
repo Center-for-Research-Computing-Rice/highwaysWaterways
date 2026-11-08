@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- ArcGIS Maps SDK for JavaScript 5.x: load core ESM from CDN (not bundled). -->
+    <title>Imagine Houston</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "@arcgis/core/": "https://js.arcgis.com/5.0/@arcgis/core/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div class="app">
+      <header class="header">
+        <div class="header__brand">
+          <h1 class="title">Highways Waterways</h1>
+          <p class="subtitle">Houston's evolution over time</p>
+        </div>
+        <div
+          class="time-rail"
+          id="timeRail"
+          role="group"
+          aria-label="Time slider"
+          title="LayerView.filter: firstyear ≤ year AND lastyear ≥ year"
+        >
+          <div class="time-rail__controls">
+            <button
+              type="button"
+              class="time-rail__nav"
+              id="yearPrev"
+              aria-label="Previous year"
+            >
+              <svg
+                class="time-rail__nav-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.25"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M14 7l-5 5 5 5"
+                />
+              </svg>
+            </button>
+            <output
+              class="time-rail__year"
+              id="yearValue"
+              for="yearSlider"
+              aria-live="polite"
+              >1950</output
+            >
+            <button
+              type="button"
+              class="time-rail__nav"
+              id="yearNext"
+              aria-label="Next year"
+            >
+              <svg
+                class="time-rail__nav-icon"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                focusable="false"
+              >
+                <path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.25"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M10 7l5 5-5 5"
+                />
+              </svg>
+            </button>
+          </div>
+          <div class="time-rail__slider">
+            <div class="time-rail__stack">
+              <div class="time-rail__track-bar" aria-hidden="true">
+                <div class="time-rail__track-fill" id="yearTrackFill"></div>
+              </div>
+              <div class="time-rail__labels" id="yearTickLabels" aria-hidden="true"></div>
+              <input
+                type="range"
+                id="yearSlider"
+                class="time-rail__input"
+                min="1836"
+                max="2040"
+                step="1"
+                value="1950"
+                aria-valuemin="1836"
+                aria-valuemax="2040"
+                aria-valuenow="1950"
+                aria-label="Year"
+              />
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <div class="app-body">
+        <aside class="side-panel" aria-label="Side panel">
+          <section class="panel-block panel-block--gallery" aria-labelledby="galleryHeading">
+            <h2 class="panel-block__heading" id="galleryHeading">Historical views</h2>
+            <div class="panel-block__body hist-gallery">
+              <div class="hist-gallery__viewport">
+                <div class="hist-gallery__list" id="galleryContent"></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel-block panel-block--gallery" aria-labelledby="mapGalleryHeading">
+            <h2 class="panel-block__heading" id="mapGalleryHeading">Historical maps</h2>
+            <div class="panel-block__body hist-gallery">
+              <div class="hist-gallery__viewport">
+                <div class="hist-gallery__list" id="mapGalleryContent"></div>
+              </div>
+            </div>
+          </section>
+          <section class="panel-block panel-block--legend" aria-labelledby="legendHeading">
+            <h2 class="panel-block__heading" id="legendHeading">Legend</h2>
+            <div class="panel-block__body legend-panel__content" id="legendContent"></div>
+          </section>
+        </aside>
+        <main class="app-main">
+          <div
+            class="map-view-preview"
+            id="mapViewPreview"
+            hidden
+            aria-live="polite"
+          >
+            <p class="map-view-preview__title" id="mapViewPreviewTitle"></p>
+            <div class="map-view-preview__media">
+              <img
+                id="mapViewPreviewImg"
+                class="map-view-preview__img"
+                alt=""
+                draggable="false"
+              />
+            </div>
+            <div class="map-view-preview__actions">
+              <button
+                type="button"
+                class="map-view-preview__nav-btn"
+                id="mapViewPreviewPrev"
+                aria-label="Previous historical view"
+              >
+                ‹
+              </button>
+              <button
+                type="button"
+                class="map-view-preview__expand"
+                id="mapViewPreviewExpand"
+              >
+                Expand
+              </button>
+              <button
+                type="button"
+                class="map-view-preview__nav-btn"
+                id="mapViewPreviewNext"
+                aria-label="Next historical view"
+              >
+                ›
+              </button>
+            </div>
+          </div>
+          <div
+            class="map-tile-preview"
+            id="mapTilePreview"
+            hidden
+            aria-live="polite"
+          >
+            <button
+              type="button"
+              class="map-tile-preview__close"
+              id="mapTilePreviewClose"
+              aria-label="Clear selected historical map"
+            >
+              ×
+            </button>
+            <p class="map-tile-preview__title" id="mapTilePreviewTitle"></p>
+            <div class="map-tile-preview__media">
+              <img
+                id="mapTilePreviewImg"
+                class="map-tile-preview__img"
+                alt=""
+                draggable="false"
+              />
+            </div>
+            <div class="map-tile-preview__controls" role="group" aria-label="Map transparency">
+              <label class="map-tile-preview__label" for="mapTileOpacity">
+                Transparency
+                <output id="mapTileOpacityValue" class="map-tile-preview__value" for="mapTileOpacity"
+                  >10%</output
+                >
+              </label>
+              <input
+                type="range"
+                id="mapTileOpacity"
+                class="map-tile-preview__range"
+                min="0"
+                max="90"
+                step="1"
+                value="10"
+                aria-label="Map transparency"
+              />
+            </div>
+          </div>
+          <div id="viewDiv" class="view"></div>
+        </main>
+      </div>
+    </div>
+
+    <dialog
+      class="view-image-lightbox"
+      id="viewImageLightbox"
+      aria-labelledby="viewImageLightboxTitle"
+    >
+      <div class="view-image-lightbox__sheet">
+        <header class="view-image-lightbox__header">
+          <h2 class="view-image-lightbox__title" id="viewImageLightboxTitle"></h2>
+          <button
+            type="button"
+            class="view-image-lightbox__close"
+            id="viewImageLightboxClose"
+            aria-label="Close full image"
+          >
+            ×
+          </button>
+        </header>
+        <div class="view-image-lightbox__body">
+          <img
+            id="viewImageLightboxImg"
+            class="view-image-lightbox__img"
+            alt=""
+            draggable="false"
+          />
+        </div>
+        <div
+          class="view-image-lightbox__footer-nav"
+          role="toolbar"
+          aria-label="Browse historical views"
+        >
+          <button
+            type="button"
+            class="view-image-lightbox__nav-btn"
+            id="viewImageLightboxPrev"
+            aria-label="Previous historical view"
+          >
+            ‹
+          </button>
+          <button
+            type="button"
+            class="view-image-lightbox__nav-btn"
+            id="viewImageLightboxNext"
+            aria-label="Next historical view"
+          >
+            ›
+          </button>
+        </div>
+      </div>
+    </dialog>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
