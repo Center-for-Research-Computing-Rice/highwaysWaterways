@@ -22,6 +22,8 @@ function arcgisExternal(command) {
 }
 
 export default defineConfig(({ command }) => ({
+  // Project Pages: https://brunocastrosousa.github.io/imagineHouston/
+  base: command === 'build' ? '/imagineHouston/' : '/',
   plugins: [arcgisExternal(command)],
   build: {
     rollupOptions: {
